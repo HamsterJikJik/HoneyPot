@@ -1,8 +1,8 @@
 # https://ipgeolocation.io/ 에서 API 키를 받아서 아래에 입력합니다.
 # 큰 따옴표 안 값을 바꾸시면 됩니다.
 $API_KEY      = "#####################################"
-$LOGFILE_NAME = "failed_rdp.log" # 로그 파일의 이름을 지정합니다.
-$LOGFILE_PATH = "C:\ProgramData\$($LOGFILE_NAME)" # 로그 파일이 저장될 경로를 지정합니다.
+$LOGFILE_NAME = "failed_rdp.log" 
+$LOGFILE_PATH = "C:\ProgramData\$($LOGFILE_NAME)"
 
 
 # Windows Event Viewer에서 RDP 이벤트를 필터링 해주는 필터
