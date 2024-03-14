@@ -1,5 +1,6 @@
-# https://ipgeolocation.io/ 에서 API 키를 받아서 아래에 입력합니다.
-# 큰 따옴표 안 값을 바꾸시면 됩니다.
+# https://ipgeolocation.io/ 에서 API 키를 받아서 아래에 입력
+# 큰 따옴표 안 값을 바꾸면 됨
+# 내 API 키는 안 알랴줌 ㅋㅋ
 $API_KEY      = "#####################################"
 $LOGFILE_NAME = "failed_rdp.log" 
 $LOGFILE_PATH = "C:\ProgramData\$($LOGFILE_NAME)"
@@ -17,13 +18,15 @@ $XMLFilter = @'
 '@
 
 <#
-    이 함수는 Log Analytics 작업 공간에서 '추출' 기능을 훈련시키는 데 사용되는 샘플 로그 파일들을 생성합니다.
-    충분한 로그 파일이 없으면, 일부 필드를 "학습"하는 데 실패할 수 있습니다.
+    이 함수는 Log Analytics 작업 공간에서 '추출' 기능을 훈련시키는 데 사용되는 샘플 로그 파일들을 생성
+    충분한 로그 파일이 없으면 일부 필드를 "학습"하는 데 실패할 수 있음
     "samplehost"라는 목적지 호스트를 필터링함으로써 이 가짜 기록들을 지도에서 제외할 수 있습니다.
+    Azure 로그 쿼리에서 나는 제외했음
 #>
 Function write-Sample-Log() {
-    # 샘플 로그 데이터를 로그 파일에 추가합니다. 각 줄은 다음 정보를 포함합니다:
-    # 위도, 경도, 목적지 호스트, 사용자 이름, 출처 호스트, 주/도, 국가, 레이블(국가 - IP), 타임스탬프
+    # 샘플 로그 데이터를 로그 파일에 추가; 
+    # 각 줄은 다음 정보를 포함:
+       # 위도, 경도, 목적지 호스트, 사용자 이름, 출처 호스트, 주/도, 국가, 레이블(국가 - IP), 타임스탬프
     "latitude:47.91542,longitude:-120.60306,destinationhost:samplehost,username:fakeuser,sourcehost:24.16.97.222,state:Washington,country:United States,label:United States - 24.16.97.222,timestamp:2021-10-26 03:28:29" | Out-File $LOGFILE_PATH -Append -Encoding utf8
     "latitude:-22.90906,longitude:-47.06455,destinationhost:samplehost,username:lnwbaq,sourcehost:20.195.228.49,state:Sao Paulo,country:Brazil,label:Brazil - 20.195.228.49,timestamp:2021-10-26 05:46:20" | Out-File $LOGFILE_PATH -Append -Encoding utf8
     "latitude:52.37022,longitude:4.89517,destinationhost:samplehost,username:CSNYDER,sourcehost:89.248.165.74,state:North Holland,country:Netherlands,label:Netherlands - 89.248.165.74,timestamp:2021-10-26 06:12:56" | Out-File $LOGFILE_PATH -Append -Encoding utf8
@@ -37,34 +40,35 @@ Function write-Sample-Log() {
     "latitude:-55.88802,longitude:37.65136,destinationhost:samplehost,username:Test,sourcehost:94.232.47.130,state:Central Federal District,country:Russia,label:Russia - 94.232.47.130,timestamp:2021-10-26 14:25:33" | Out-File $LOGFILE_PATH -Append -Encoding utf8
 }
 
-# 로그 파일이 존재하지 않으면 새로운 로그 파일을 생성합니다.
+# 로그 파일이 존재하지 않으면 새로운 로그 파일을 생성
 if ((Test-Path $LOGFILE_PATH) -eq $false) {
     New-Item -ItemType File -Path $LOGFILE_PATH
     write-Sample-Log
 }
 
-# 이벤트 뷰어 로그를 지속적으로 체크하기 위한 무한 루프입니다.
+# 이벤트 뷰어 로그를 지속적으로 체크하기 위한 무한 루프
 while ($true)
 {
-    # API의 요청 한도를 초과하지 않기 위해 1초간 대기합니다.
+    # API의 요청 한도를 초과하지 않기 위해 1초간 대기
     Start-Sleep -Seconds 1
     
-    # XML 필터를 사용하여 이벤트를 추출합니다.
+    # XML 필터를 사용하여 이벤트를 추출
     $events = Get-WinEvent -FilterXml $XMLFilter -ErrorAction SilentlyContinue
     if ($Error) {
-       # 로그인 실패 이벤트를 찾지 못한 경우의 처리. 스크립트를 재실행하라는 안내 메시지를 표시할 수 있습니다.
+       # 로그인 실패 이벤트를 찾지 못한 경우의 처리. 
+       # 스크립트를 재실행하라는 안내 메시지를 표시할 수 있음
     }
 
-   # 수집된 각 이벤트에 대해 반복 처리합니다.
-   # IP 주소의 지리적 위치를 조회하고  새 이벤트를 사용자 정의 로그에 추가합니다.
+   # 수집된 각 이벤트에 대해 반복 처리
+   # IP 주소의 지리적 위치를 조회 및 새 이벤트를 사용자 정의 로그에 추가
     foreach ($event in $events) {
         
-        # $event.properties[19]는 실패한 로그온 시도에서 출처 IP 주소.
-        # IP 주소가 존재하는 경우에만 처리를 진행.
+        # $event.properties[19]는 실패한 로그온 시도에서 출처 IP 주소
+        # IP 주소가 존재하는 경우에만 처리를 진행
         if ($event.properties[19].Value.Length -ge 5) {
 
-            # 이벤트에서 필요한 정보를 추출합니다. 추출된 정보는 새 사용자 정의 로그에 삽입될 예정입니다.
-            # 여기에는 타임스탬프, 이벤트 ID, 목적지 호스트, 사용자 이름, 출처 호스트, 출처 IP가 포함됩니다.
+            # 이벤트에서 필요한 정보를 추출. 추출된 정보는 새 사용자 정의 로그에 삽입될 예정
+            # 여기에는 타임스탬프, 이벤트 ID, 목적지 호스트, 사용자 이름, 출처 호스트, 출처 IP가 포함
 
             $timestamp = $event.TimeCreated
             $year = $event.TimeCreated.Year
@@ -103,21 +107,22 @@ while ($true)
             $sourceIp = $event.properties[19].Value # IP Address
         
 
-            # 로그 파일의 현재 내용을 조회합니다.
+            # 로그 파일의 현재 내용을 조회
             $log_contents = Get-Content -Path $LOGFILE_PATH
 
-            # 로그가 아직 존재하지 않는 경우에만 로그 파일에 새로운 항목을 추가합니다.
+            # 로그가 아직 존재하지 않는 경우에만 로그 파일에 새로운 항목을 추가
             if (-Not ($log_contents -match "$($timestamp)") -or ($log_contents.Length -eq 0)) {
             
-                # 지리적 위치 데이터를 수집하고, API의 요청 한도를 고려하여 잠시 대기합니다.
+                # 지리적 위치 데이터를 수집하고 API의 요청 한도를 고려하여 잠시 대기
+                # 근데 굳이 슬립 안 해도 될듯
                 Start-Sleep -Seconds 1
 
-                # 지리적 위치 정보를 조회하기 위해 API에 요청을 보냅니다.
+                # 지리적 위치 정보를 조회하기 위해 API에 요청을 보냄
                 # For more info: https://ipgeolocation.io/documentation/ip-geolocation-api.html
                 $API_ENDPOINT = "https://api.ipgeolocation.io/ipgeo?apiKey=$($API_KEY)&ip=$($sourceIp)"
                 $response = Invoke-WebRequest -UseBasicParsing -Uri $API_ENDPOINT
 
-                # API 응답에서 필요한 데이터를 추출하여 변수에 저장합니다.
+                # API 응답에서 필요한 데이터를 추출하여 변수에 저장
                 $responseData = $response.Content | ConvertFrom-Json
                 $latitude = $responseData.latitude
                 $longitude = $responseData.longitude
@@ -126,13 +131,13 @@ while ($true)
                 $country = $responseData.country_name
                 if ($country -eq "") {$country -eq "null"}
 
-                # 수집된 모든 데이터를 사용자 정의 로그 파일에 기록합니다.
+                # 수집된 모든 데이터를 사용자 정의 로그 파일에 기록
                 "latitude:$($latitude),longitude:$($longitude),destinationhost:$($destinationHost),username:$($username),sourcehost:$($sourceIp),state:$($state_prov), country:$($country),label:$($country) - $($sourceIp),timestamp:$($timestamp)" | Out-File $LOGFILE_PATH -Append -Encoding utf8
 
                 Write-Host -BackgroundColor Black -ForegroundColor Magenta "latitude:$($latitude),longitude:$($longitude),destinationhost:$($destinationHost),username:$($username),sourcehost:$($sourceIp),state:$($state_prov),label:$($country) - $($sourceIp),timestamp:$($timestamp)"
             }
             else {
-                # 이미 로그 파일에 해당 이벤트가 존재하면 아무런 작업도 수행하지 않습니다.
+                # 이미 로그 파일에 해당 이벤트가 존재하면 아무런 작업도 수행하지 ㄴㄴ
             }
         }
     }
