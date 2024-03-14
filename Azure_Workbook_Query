@@ -1,0 +1,22 @@
+// 제 Azure Workbook - Map에 사용된 쿼리문입니다.
+// 로그인 실패 로그를 항목 별 분해하여 Custom Field를 만들고
+// 필드를 지도 위에 Plot 하는 방식을 채택했습니다.
+
+// 본 쿼리문은 여러분들이 자유롭게 바꾸셔도 됩니다만,
+// 리포에 업로드 되어있는 Log Exporter 또한 변경 하셔야할 겁니다.
+
+
+FAILED_RDP_WITH_GEO_CL 
+| extend username = extract(@"username:([^,]+)", 1, RawData),
+         timestamp = extract(@"timestamp:([^,]+)", 1, RawData),
+         latitude = extract(@"latitude:([^,]+)", 1, RawData),
+         longitude = extract(@"longitude:([^,]+)", 1, RawData),
+         sourcehost = extract(@"sourcehost:([^,]+)", 1, RawData),
+         state = extract(@"state:([^,]+)", 1, RawData),
+         label = extract(@"label:([^,]+)", 1, RawData),
+         destination = extract(@"destinationhost:([^,]+)", 1, RawData),
+         country = extract(@"country:([^,]+)", 1, RawData)
+| where destination != "samplehost"
+| where sourcehost != ""
+| summarize event_count=count() by latitude, longitude, sourcehost, label, destination, country
+
