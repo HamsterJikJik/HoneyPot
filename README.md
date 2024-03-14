@@ -152,8 +152,132 @@ Failed RDP의 Event ID는 4625 입니다. <br/>
 <br/>
 <a href="https://github.com/HamsterJikJik/HoneyPot/blob/main/Custom_Log_Exporter.ps1">스크립트</a>는 이 곳에서 직접 확인하실 수 있습니다.<br/>
 <br/>
-만약 직접 따라 하신다면 자유롭게 수정 및 배포하셔도 됩니다! <br/>
+만약 직접 따라 하신다면 자유롭게 수정 및 배포하셔도 됩니다!
+
 <br/>
+<br/>
+<br/>
+
+### 수집된 로그를 기반으로 지도에 Plot
+
+여기가 진짜 헬이었습니다...<br/>
+<br/>
+<br/>
+우선 Log Analytics Workspace에서 새로운 테이블을 생성하여 Azure가 제 VM의 로그를 수집할 수 있게 해주었습니다.<br/>
+<br/>
+테이블을 VM에 연결해주고 경로를 기입해주면 Azure에서 자동으로 로그 파일을 읽을 수 있는 상태가 됩니다.<br/>
+
+<div align="center"> 
+ 
+  [comment]: <> (New Log Table)
+  <img src='https://github.com/HamsterJikJik/HoneyPot/assets/97205557/f32a0229-bb7a-4f20-b66d-6b7c3e897a8f' width='600'>
+  <br/>
+  생성된 새로운 로그 테이블
+
+</div>
+
+<br/>
+생성된 로그 테이블을 출력해봅시다.<br/>
+<br/>
+<div align="center"> 
+ 
+  [comment]: <> (Log Queries)
+  <img src='https://github.com/HamsterJikJik/HoneyPot/assets/97205557/ec7bcc78-2a61-4f58-8a83-22c65e60d19e' width='600'>
+  <br/>
+  이제 Azure가 RDP 실패 로그를 읽을 수 있게 되었습니다!
+
+</div>
+
+<br/>
+눈여겨 볼 부분은 Raw Data 부분입니다. 
+<br/>
+
+
+마소 이 양반들이 공식 매뉴얼을 최신화 해주지 않았다는 사실을 깨우치는데만 꼬박 몇 시간이 걸렸습니다...<br/>
+<br/>
+매뉴얼에는 분명 출력된 로그를 우클릭하면 Custom Fields로 Extract가 가능하다고 나와있었지만,<br/>
+<br/>
+저는 아무리 우클릭해도 Extract는 커녕 창 하나 뜨지 않아서 처음엔 제 문제인가 싶어<br/>
+<br/>
+Azure에서 온갖 탭을 뒤져보며 로그의 특정 Field를 Extract 해보려고 생고생을 했습니다 ㅋㅋㅋㅋ<br/>
+<br/>
+<br/>
+하지만 레딧의 한 포스트에서 영웅을 만났습니다.<br/>
+<br/>
+마소에서 몇 번의 업데이트를 거치면서 로그를 우클릭할 수 있는 기능을 없애고<br/>
+<br/>
+쿼리문을 직접 수정하는 방식으로 커스텀 필드를 생성하는 방식으로 바꿨다고 하더라고요?<br/>
+<br/>
+현 시간부로 애플 >>넘사>> 마소임<br/>
+<br/>
+아무튼 그럼 ㅇㅇ<br/>
+<br/>
+<br/>
+하여튼 그래서 쿼리문에 extend문을 추가하여 직접 커스텀 필드를 만들어주기 시작했습니다.<br/>
+<br/>
+
+제가 사용했던 <a href="https://github.com/HamsterJikJik/HoneyPot/blob/main/Azure_Workbook_Query">쿼리문</a>은:
+<br/>
+
+~~~
+  FAILED_RDP_WITH_GEO_CL 
+  | extend username = extract(@"username:([^,]+)", 1, RawData),
+           timestamp = extract(@"timestamp:([^,]+)", 1, RawData),
+           latitude = extract(@"latitude:([^,]+)", 1, RawData),
+           longitude = extract(@"longitude:([^,]+)", 1, RawData),
+           sourcehost = extract(@"sourcehost:([^,]+)", 1, RawData),
+           state = extract(@"state:([^,]+)", 1, RawData),
+           label = extract(@"label:([^,]+)", 1, RawData),
+           destination = extract(@"destinationhost:([^,]+)", 1, RawData),
+           country = extract(@"country:([^,]+)", 1, RawData)
+  | where destination != "samplehost"
+  | where sourcehost != ""
+  | summarize event_count=count() by latitude, longitude, sourcehost, label, destination, country
+~~~
+
+<br/>
+이거 였습니다.<br/>
+<br/>
+각 로그의 Raw Data를 콤마로 구분지어 놨기 때문에<br/>
+<br/>
+필드 별로 뜯어서 새로은 필드를 구성해주었습니다.<br/>
+<br/>
+<br/>
+여기서 주로 사용하게 될 필드는:<br/>
+<br/>
+
+1. Label
+2. Country
+3. SourceHost
+4. Longitude
+5. Latitude
+
+다섯 가지 정도입니다. <br/>
+<br/>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
