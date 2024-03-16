@@ -40,7 +40,7 @@
 <div align="center"> 
  
   [comment]: <> (Logical Diagram)
-  <img src='https://github.com/HamsterJikJik/HoneyPot/assets/97205557/7339ad3d-d536-4552-9939-62b89a8490c2' width='500'>
+  <img src='https://github.com/HamsterJikJik/HoneyPot/assets/97205557/7339ad3d-d536-4552-9939-62b89a8490c2' width='700'>
   <br/>
   프로젝트의 Logical Diagram
 </div>
