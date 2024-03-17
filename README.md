@@ -242,6 +242,14 @@ Azure에서 온갖 탭을 뒤져보며 로그의 특정 Field를 Extract 해보�
 <br/>
 하여튼 그래서 쿼리문에 extend문을 추가하여 직접 커스텀 필드를 만들어주기 시작했습니다.<br/>
 <br/>
+물론 이 과정 또한 고난의 연속이었습니다.<br/>
+<br/>
+처음 작성했던 쿼리문은 지도에 Plot될 숫자나 특정 값만이 아닌, <br/>
+<br/>
+콤마를 기준으로 각 영역을 뜯어냈기 때문에 특히 위도와 경도는 아예 사용할 수 없었습니다.<br/>
+<br/>
+따라서 약간의 구글링으로 방법을 찾았습니다.<br/>
+<br/>
 
 제가 사용했던 <a href="https://github.com/HamsterJikJik/HoneyPot/blob/main/Azure_Workbook_Query">쿼리문</a>은:
 <br/>
