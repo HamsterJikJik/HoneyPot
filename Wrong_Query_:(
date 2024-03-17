@@ -1,0 +1,18 @@
+// 이 쿼리문은 작성한 파워쉘 스크립트의 로그 수집 방식으로 인해 올바르지 않습니다.
+// 그저 참고용으로만 보시되, 
+// 제 첫 접근 방식이 이런 느낌이었다는 것을 보여드리기 위함입니다.
+
+FAILED_RDP_WITH_GEO_CL
+| extend CSVFields  = split(RawData, ',') 
+| extend timestamp  = todatetime(CSVFields[8])
+| extend label    = tostring(CSVFields[7])
+| extend country = tostring(CSVFields[6])
+| extend state = tostring(CSVFields[5])
+| extend source = tostring(CSVFields[4])
+| extend user = tostring(CSVFields[3])
+| extend dest = tostring(CSVFields[2])
+| extend longitude = tostring(CSVFields[1])
+| extend latitude = tostring(CSVFields[0])
+| summarize event_count=count() by source_CF, tostring(latitude_CF), tostring(longitude_CF), country_CF, label_CF, dest_CF | where dest_CF !="samplehost"
+| where destination != "samplehost"
+| where sourcehost != ""
